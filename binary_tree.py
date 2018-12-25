@@ -155,7 +155,7 @@ class BinaryTree(object):
             v.parent = u.parent
 
     def _delete(self, node):
-        log.debug("Deleting node".format(node))
+        log.debug("Deleting node {}".format(node))
         if not node:
             raise ValueError("Invalid node specified for delete")
         if not node.left:
@@ -181,7 +181,8 @@ class BinaryTree(object):
         log.debug("Finding value {} in tree {}".format(value, self.name))
         node = self.find(value)
         if not node:
-            log.error("The value {} was not found in the tree {}".format(value, self.name))
+            log.error("The value {} was not found in the tree {}".format(
+                value, self.name))
             return
         log.debug("Found node {}, parent is {}".format(node, node.parent))
         self._delete(node)

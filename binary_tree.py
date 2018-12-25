@@ -4,32 +4,43 @@ import random
 
 log = logging.getLogger()
 
+
 class TreeNode(object):
     def __init__(self, value):
         self.left = None
         self.right = None
         self.value = value
         self.parent = None
-    
+
     def __repr__(self):
         return str(self.value)
-    
+
     def __lt__(self, other):
         if not other:
             return False
         return self.value < other.value
-    
+
     def __eq__(self, other):
         if not other:
             return False
-        
+
         return self.value == other.value
-    
+
     def __gt__(self, other):
         if not other:
             return False
-        
+
         return self.value > other.value
+
+    def height(self):
+        left = 0
+        right = 0
+        if self.left:
+            left = self.left.height()
+        if self.right:
+            right = self.right.height()
+        return 1 + max(left, right)
+
 
 class BinaryTree(object):
     def __init__(self, name):
@@ -37,7 +48,11 @@ class BinaryTree(object):
         self.height = -1
         self.num_nodes = 0
         self.name = name
-    
+        self.size = 0
+
+    def length(self):
+        return self.size
+
     # Prints the tree on it's side, with the indent set to the level of the node
     # Siblings are on the same level
     # Sample output:
@@ -63,12 +78,13 @@ class BinaryTree(object):
     - - - - - - None
     - - - None
     """
+
     def _pretty_print(self, node, level=0):
         # log.debug("Entered print at node {} at level {}".format(node, level))
         result = ''
 
         for _ in range(level):
-            result += '__' # Add 2 spaces for each level
+            result += '__'  # Add 2 spaces for each level
         result += '(' + str(node) + ")\n"
         # log.debug("Result at level {} is {}".format(level, result))
         if not node:
@@ -84,7 +100,7 @@ class BinaryTree(object):
     def __str__(self):
         # Display the tree as a string
         return self._pretty_print(self.root)
-    
+
     def get_height(self):
         return self.height
 
@@ -115,11 +131,61 @@ class BinaryTree(object):
             else:
                 cur.right = node
             node.parent = cur
-            log.debug("After insertion, cur = {}, left = {}, right = {}".format(cur, cur.left, cur.right))
+            log.debug("After insertion, cur = {}, left = {}, right = {}".format(
+                cur, cur.left, cur.right))
+        self.size += 1
 
-    def delete_node(self, value):
-        pass
-    
+    def _find_min(self, startNode):
+        cur = startNode
+        while cur and cur.left:
+            cur = cur.left
+        return cur
+
+    # Replace node u by the subtree rooted at v
+    def _transplant(self, u, v):
+        log.debug(
+            "Transplanting node {} with subtree rooted at node {}".format(u, v))
+        if not u.parent:
+            self.root = v
+        elif u == u.parent.left:
+            u.parent.left = v
+        else:
+            u.parent.right = v
+        if v:
+            v.parent = u.parent
+
+    def _delete(self, node):
+        log.debug("Deleting node".format(node))
+        if not node:
+            raise ValueError("Invalid node specified for delete")
+        if not node.left:
+            self._transplant(node, node.right)
+        elif not node.right:
+            self._transplant(node, node.left)
+        else:
+            successor = self._find_min(node.right)
+            if not successor.parent == node:
+                # Swap the successor with it's right child
+                self._transplant(successor, successor.right)
+                if successor:
+                    successor.right = node.right
+                    successor.right.parent = successor
+            # Replace the node to be deleted with the subtree of the successor
+            self._transplant(node, successor)
+            successor.left = node.left
+            successor.left.parent = successor
+        del node
+        self.size -= 1
+
+    def delete(self, value):
+        log.debug("Finding value {} in tree {}".format(value, self.name))
+        node = self.find(value)
+        if not node:
+            log.error("The value {} was not found in the tree {}".format(value, self.name))
+            return
+        log.debug("Found node {}, parent is {}".format(node, node.parent))
+        self._delete(node)
+
     def find(self, value):
         log.debug("Finding value {} in tree {}".format(value, self.name))
         node = TreeNode(value)
@@ -133,8 +199,10 @@ class BinaryTree(object):
         if not cur or cur != node:
             log.info("The value {} was not found".format(node))
             raise ValueError
-        log.info("Found value {} at node.parent = {}, left = {}, right = {}".format(value, cur.parent, cur.left, cur.right))
+        log.info("Found value {} at node.parent = {}, left = {}, right = {}".format(
+            value, cur.parent, cur.left, cur.right))
         return cur
+
 
 if __name__ == '__main__':
     parser = ArgumentParser()
@@ -153,4 +221,7 @@ if __name__ == '__main__':
     for i in range(10):
         tree.insert(TreeNode(random.randint(-100, 100)))
 
+    print("Tree: \n", tree)
+    value = input("To delete: ")
+    tree.delete(int(value))
     print("Tree: \n", tree)

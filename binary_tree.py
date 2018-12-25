@@ -9,6 +9,7 @@ class TreeNode(object):
         self.left = None
         self.right = None
         self.value = value
+        self.parent = None
     
     def __repr__(self):
         return str(self.value)
@@ -31,10 +32,11 @@ class TreeNode(object):
         return self.value > other.value
 
 class BinaryTree(object):
-    def __init__(self):
+    def __init__(self, name):
         self.root = None
         self.height = -1
         self.num_nodes = 0
+        self.name = name
     
     # Prints the tree on it's side, with the indent set to the level of the node
     # Siblings are on the same level
@@ -62,13 +64,13 @@ class BinaryTree(object):
     - - - None
     """
     def _pretty_print(self, node, level=0):
-        log.debug("Entered print at node {} at level {}".format(node, level))
+        # log.debug("Entered print at node {} at level {}".format(node, level))
         result = ''
 
         for _ in range(level):
-            result += '- ' # Add 2 spaces for each level
-        result += str(node) + "\n"
-        log.debug("Result at level {} is {}".format(level, result))
+            result += '__' # Add 2 spaces for each level
+        result += '(' + str(node) + ")\n"
+        # log.debug("Result at level {} is {}".format(level, result))
         if not node:
             return result
         if not node.left and not node.right:
@@ -89,9 +91,8 @@ class BinaryTree(object):
     def get_num_nodes(self):
         return self.num_nodes
 
-    def insert(self, value):
-        log.debug("Inserting node {} into tree".format(value))
-        node = TreeNode(value)
+    def insert(self, node):
+        log.debug("Inserting node {} into tree {}".format(node, self.name))
         cur = self.root
         while cur and (cur.left or cur.right):
             if node < cur and cur.left:
@@ -108,33 +109,48 @@ class BinaryTree(object):
             log.debug("The first node is being inserted")
             self.root = node
         else:
-            log.debug("Inserting value {} at {}".format(value, cur))
+            log.debug("Inserting value {} at {}".format(node, cur))
             if node < cur:
                 cur.left = node
             else:
                 cur.right = node
+            node.parent = cur
             log.debug("After insertion, cur = {}, left = {}, right = {}".format(cur, cur.left, cur.right))
 
     def delete_node(self, value):
         pass
     
-    def find_node(self, value):
-        pass
+    def find(self, value):
+        log.debug("Finding value {} in tree {}".format(value, self.name))
+        node = TreeNode(value)
+        cur = self.root
+        while cur and not node == cur:
+            if node < cur:
+                cur = cur.left
+            else:
+                cur = cur.right
+
+        if not cur or cur != node:
+            log.info("The value {} was not found".format(node))
+            raise ValueError
+        log.info("Found value {} at node.parent = {}, left = {}, right = {}".format(value, cur.parent, cur.left, cur.right))
+        return cur
 
 if __name__ == '__main__':
     parser = ArgumentParser()
-    logLevel = "DEBUG"
     parser.add_argument('--log')
     args = parser.parse_args()
     logLevel = args.log
 
-    if logLevel != None:
-        numLogLevel = getattr(logging, logLevel.upper())
-        logging.basicConfig(level=numLogLevel)
-        log.setLevel(numLogLevel)    
+    if logLevel == None:
+        logLevel = "INFO"
 
-    tree = BinaryTree()
+    numLogLevel = getattr(logging, logLevel.upper())
+    logging.basicConfig(level=numLogLevel)
+    log.setLevel(numLogLevel)
+
+    tree = BinaryTree("Test")
     for i in range(10):
-        tree.insert(random.randint(-100, 100))
+        tree.insert(TreeNode(random.randint(-100, 100)))
 
     print("Tree: \n", tree)

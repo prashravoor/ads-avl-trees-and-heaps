@@ -50,6 +50,7 @@ class BinaryMinHeap(BinaryTree):
             value = TreeNode(value)
         if not self.root:
             self.root = value
+            self.size += 1
             return
         self._insert(self.root, value)
 
@@ -148,8 +149,8 @@ class BinaryMinHeap(BinaryTree):
     def delete_min(self):
         log.debug("ExtractMin for heap {}".format(self.name))
         if not self.root:
-            return None
-        node = self._find_min()
+            raise ValueError
+        node = TreeNode(self._find_min().value)
         self.delete(node)
         return node
 

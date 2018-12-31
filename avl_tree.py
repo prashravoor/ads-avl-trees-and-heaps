@@ -115,23 +115,23 @@ class AvlTree(BinaryTree):
         if key < root:
             log.debug("Going left at node {}".format(root))
             root.left = self._delete_recursvive(root.left, key)
-
         elif key > root:
             log.debug("Going right at node {}".format(root))
             root.right = self._delete_recursvive(root.right, key)
-
         else:
             log.debug("Found the node at {}".format(root))
             if root.left is None:
                 log.debug("Node has no left child")
                 temp = root.right
                 root = None
+                self.size -= 1
                 return temp
 
             elif root.right is None:
                 log.debug("Node has no right child")
                 temp = root.left
                 root = None
+                self.size -= 1
                 return temp
 
             log.debug("Node is an internal node")
@@ -167,6 +167,9 @@ class AvlTree(BinaryTree):
 
     def delete(self, node):
         log.debug('Deleting node {} in Tree {}'.format(node, self.name))
+        if type(node) == int:
+            node = AvlTreeNode(node)
+
         self.root = self._delete_recursvive(self.root, node)
 
 

@@ -5,12 +5,14 @@ import csv
 import logging
 from avl_tree import AvlTree, AvlTreeNode
 from binary_tree import BinaryTree, TreeNode
+from bin_heap import BinaryMinHeap
 from argparse import ArgumentParser
 import time
 from random import randint
 import tkinter.simpledialog
 
 logger = logging.getLogger()
+
 
 class Application(pygubu.TkApplication):
     def __init__(self, master):
@@ -73,6 +75,22 @@ class Application(pygubu.TkApplication):
         # Call destroy on toplevel to finish program
         self.toplevel.master.destroy()
 
+    def setLabels(self):
+        logger.debug("Set Labels called")
+        if self.selected_tree:
+            self.num_of_nodes['text'] = "{}".format(
+                self.selected_tree.length())
+            self.num_of_levels['text'] = "{}".format(
+                self.selected_tree.height())
+
+    def disable_buttons(self):
+        btn_state = 'disabled'
+        if self.selected_tree and self.get_type(self.selected_tree) == '(Binary Heap)':
+            btn_state = 'enabled'
+
+        self.find_min_btn.configure(state=btn_state)
+        self.delete_min_btn.configure(state=btn_state)
+
     def CreateAvlTree(self):
         result = tk.simpledialog.askstring(
             'AVL Tree Name', 'Enter AVL Tree Name', parent=None)
@@ -109,7 +127,7 @@ class Application(pygubu.TkApplication):
         except KeyError:
             logger.info("Created new Tree of type {} linked".format(type))
             if "heap" == type:
-                self.trees[name] = BinaryTree(name)
+                self.trees[name] = BinaryMinHeap(name)
             else:
                 self.trees[name] = AvlTree(name)
             return
@@ -117,7 +135,8 @@ class Application(pygubu.TkApplication):
 
     def get_type(self, tree):
         dummyType = AvlTree("dummy")
-        logger.debug("Type of tree: {}, {}".format(type(tree), type(dummyType)))
+        logger.debug("Type of tree: {}, {}".format(
+            type(tree), type(dummyType)))
         if type(tree) == type(dummyType):
             del dummyType
             return "(AVL Tree)"
@@ -148,14 +167,6 @@ class Application(pygubu.TkApplication):
         except KeyError:
             self.appendMessage("Tree {} does not exist".format(result))
 
-    def setLabels(self):
-        logger.debug("Set Labels called")
-        if self.selected_tree:
-            self.num_of_nodes['text'] = "{}".format(
-                self.selected_tree.length())
-            self.num_of_levels['text'] = "{}".format(
-                self.selected_tree.height())
-
     def SelectTree(self):
         result = tk.simpledialog.askstring(
             'Select Tree', 'Enter Tree Name', parent=None)
@@ -169,6 +180,7 @@ class Application(pygubu.TkApplication):
             self.selected_tree_obj['text'] = result
             self.tree_type['text'] = self.get_type(self.selected_tree)
             self.setLabels()
+            self.disable_buttons()
         except KeyError:
             self.appendMessage("Tree {} does not exist".format(result))
 
@@ -188,16 +200,13 @@ class Application(pygubu.TkApplication):
         result = int(result)
 
         t1 = time.perf_counter()
-        inserted = self.selected_tree.insert(result)
+        self.selected_tree.insert(result)
         t2 = time.perf_counter()
         self.setLabels()
-        if self.trace_mode:
-            if inserted:
-                self.appendMessage("{}".format(self.selected_tree))
-            else:
-                self.appendMessage("Skipping duplicate item {}".format(result))
         self.appendMessage(
             "Item {} inserted in {} seconds".format(result, (t2 - t1)))
+        if self.trace_mode:
+            self.appendMessage("{}".format(self.selected_tree))
 
     def GetTree(self):
         if not self.selected_tree:
@@ -247,14 +256,10 @@ class Application(pygubu.TkApplication):
         for key in keys:
             try:
                 key = int(key)
-                inserted = self.selected_tree.insert(int(key))
+                self.selected_tree.insert(int(key))
                 if self.trace_mode:
-                    if inserted:
-                        self.appendMessage(
-                            "Inserted Key {}, the tree is now {}".format(key, self.selected_tree))
-                    else:
-                        self.appendMessage(
-                            "Skipping duplicate node {}".format(key))
+                    self.appendMessage(
+                        "Inserted Key {}, the tree is now {}".format(key, self.selected_tree))
             except:
                 logger.error(
                     "Found invalid key {} in file, skipping it".format(key))
@@ -317,15 +322,15 @@ class Application(pygubu.TkApplication):
         result = int(result)
 
         t1 = time.perf_counter()
-        deleted = self.selected_tree.delete(result)
-        t2 = time.perf_counter()
-        if deleted:
+        try:
+            self.selected_tree.delete(result)
+            t2 = time.perf_counter()
             self.appendMessage("Deleted item {} from Tree {} in {} seconds".format(
                 result, self.selected_tree.name, (t2 - t1)))
-            self.setLabels()
             if self.trace_mode:
                 self.appendMessage("{}".format(self.selected_tree))
-        else:
+            self.setLabels()
+        except ValueError:
             self.appendMessage("Item {} was not found in the Tree {}".format(
                 result, self.selected_tree.name))
 
@@ -342,15 +347,15 @@ class Application(pygubu.TkApplication):
             return
         result = int(result)
 
-        t1 = time.perf_counter()
-        node = self.selected_tree.find(result)
-        t2 = time.perf_counter()
-        if not node:
-            self.appendMessage("Item {} was not found Tree {}".format(
-                result, self.selected_tree.name))
-        else:
+        try:
+            t1 = time.perf_counter()
+            self.selected_tree.find(result)
             self.appendMessage("Item {} was found in the tree {}, Left Node: {}, Right Node: {}, Parent: {}".format(
                 result, self.selected_tree.name, node.left, node.right, node.parent))
+        except ValueError:
+            self.appendMessage("Item {} was not found Tree {}".format(
+                result, self.selected_tree.name))
+        t2 = time.perf_counter()
         self.appendMessage(
             "Find Node Completed in {} seconds".format((t2 - t1)))
 
@@ -388,14 +393,13 @@ class Application(pygubu.TkApplication):
         for key in keys:
             try:
                 key = int(key)
-                deleted = self.selected_tree.delete(int(key))
+                self.selected_tree.delete(int(key))
                 if self.trace_mode:
-                    if deleted:
-                        self.appendMessage(
-                            "Deleted Key {}, the Tree is now {}".format(key, self.selected_tree))
-                    else:
-                        self.appendMessage(
-                            "Key {} was not found in the tree".format(key))
+                    self.appendMessage(
+                        "Deleted Key {}, the Tree is now\n{}".format(key, self.selected_tree))
+            except ValueError:
+                self.appendMessage(
+                    "Key {} was not found in the tree".format(key))
             except:
                 logger.error(
                     "Found invalid key {} in file, skipping it".format(key))
@@ -403,6 +407,31 @@ class Application(pygubu.TkApplication):
         t2 = time.perf_counter()
         self.appendMessage(
             "Total time to delete {} keys: {} seconds".format(len(keys), (t2 - t1)))
+
+    def FindMin(self):
+        t1 = time.perf_counter()
+        self.appendMessage('The minimum element in the tree is {}'.format(
+            self.selected_tree._find_min()))
+        t2 = time.perf_counter()
+        self.appendMessage(
+            'Total time to find minimal element: {} seconds'.format(t2-t1))
+
+    def DeleteMin(self):
+        try:
+            t1 = time.perf_counter()
+            node = self.selected_tree.delete_min()
+            self.appendMessage("Found minimum element: {}, Left Node: {}, Right Node: {}".format(
+                node, node.left, node.right))
+            if self.trace_mode:
+                self.appendMessage(
+                    "Deleted Key {}, the Tree is now\n{}".format(node, self.selected_tree))
+            self.setLabels()
+        except ValueError:
+            self.appendMessage('Failed to delete min, the heap is empty')
+
+        t2 = time.perf_counter()
+        self.appendMessage(
+            'Total time to delete minimal element: {} seconds'.format(t2-t1))
 
 
 if __name__ == '__main__':

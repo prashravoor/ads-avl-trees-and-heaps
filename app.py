@@ -349,7 +349,7 @@ class Application(pygubu.TkApplication):
 
         try:
             t1 = time.perf_counter()
-            self.selected_tree.find(result)
+            node = self.selected_tree.find(result)
             self.appendMessage("Item {} was found in the tree {}, Left Node: {}, Right Node: {}, Parent: {}".format(
                 result, self.selected_tree.name, node.left, node.right, node.parent))
         except ValueError:

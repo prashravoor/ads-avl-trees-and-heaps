@@ -5,21 +5,10 @@ import random
 
 log = logging.getLogger()
 
-
 class AvlTreeNode(TreeNode):
     def __init__(self, value):
         TreeNode.__init__(self, value)
         self.balance_factor = 0
-
-    def __repr__(self):
-        # result = "({}, {}, Parent-".format(self.value, self.balance_factor)
-        result = "({}, {})".format(self.value, self.balance_factor)
-        """if not self.parent:
-            result += "None)"
-        else:
-            result += str(self.parent.value) + ")"
-            """
-        return result
 
     # Trigger recalculation of the balance factor
     def height_difference(self):
@@ -29,9 +18,8 @@ class AvlTreeNode(TreeNode):
         if self.right:
             self.balance_factor += (self.right.height())
 
-        log.debug("After calculating balance factor: {}".format(self))
+        log.debug("After calculating balance factor: {}".format(self.balance_factor))
         return self.balance_factor
-
 
 class AvlTree(BinaryTree):
     def __init__(self, name):
@@ -75,83 +63,111 @@ class AvlTree(BinaryTree):
             temp.parent = k1
         return self._rotate_with_right_child(k1)
 
-    def _insert_recursive(self, node, cur):
-        if not cur:
-            # Node is the root
-            self.root = node
-            return
-        if node < cur:
-            if cur.left:
-                log.debug("Going left at node {}".format(cur))
-                self._insert_recursive(node, cur.left)
-            else:
-                log.debug("Inserting left of node {}".format(cur))
-                cur.left = node
-                node.parent = cur
-            # Rotate the tree, if needed
-            if cur.height_difference() < -1:
-                log.debug("Left Subtree - Current node: {}".format(cur))
-                log.debug("Before Rotate: \n{}".format(self))
-                parent = cur.parent
-                if not cur.left or cur.left > node:
-                    # Zig-Zig rotation
-                    temp = self._rotate_with_left_child(cur)
-                    log.debug(
-                        "After Zig-Zig: {}, {}, {}".format(temp, cur, parent))
-                    if not parent:
-                        # Modify root
-                        self.root = temp
-                    else:
-                        parent.left = temp
-                        temp.parent = parent
-                else:
-                    # Zig-Zag rotation
-                    temp = self._double_rotate_left_child(cur)
-                    log.debug("After Zig-Zag: {}, {}".format(temp, cur))
-                    if not parent:
-                        # Modify root
-                        self.root = temp
-                    else:
-                        parent.left = temp
-                        temp.parent = parent
-        else:
-            if cur.right:
-                log.debug("Going right at node {}".format(cur))
-                self._insert_recursive(node, cur.right)
-            else:
-                log.debug("Inserting right of node {}".format(cur))
-                cur.right = node
-                node.parent = cur
-
-            if cur.height_difference() > 1:
-                log.debug(
-                    "Right Subtree - Current node: {}, Inserted node: {}".format(cur, node))
-                log.debug("Before Rotate: \n{}".format(self))
-                parent = cur.parent
-                if cur.right < node:
-                    # Zag-Zag rotation
-                    temp = self._rotate_with_right_child(cur)
-                    log.debug("After Zag-Zag: {}, {}".format(temp, cur))
-                    if not parent:
-                        # Modify root
-                        self.root = temp
-                    else:
-                        parent.right = temp
-                        temp.parent = parent
-                else:
-                    # Zag-Zig rotation
-                    temp = self._double_rotate_right_child(cur)
-                    log.debug("After Zag-Zig: {}, {}".format(temp, cur))
-                    if not parent:
-                        # Modify root
-                        self.root = temp
-                    else:
-                        parent.right = temp
-                        temp.parent = parent
-
     def insert(self, node):
-        self._insert_recursive(node, self.root)
+        log.debug("Inserting node {}".format(node))
+        if type(node) == int:
+            node = AvlTreeNode(node)
+        self.root = self._insert_recursive(self.root, node)
         self.size += 1
+
+    def _insert_recursive(self, root, key):
+        if not root:
+            return key
+        elif key < root:
+            log.debug("Going left at node {}".format(root))
+            root.left = self._insert_recursive(root.left, key)
+            key.parent = root
+            log.debug("Parent of key {} is {}".format(key, root))
+        else:
+            log.debug("Going right at node {}".format(root))
+            root.right = self._insert_recursive(root.right, key)
+            key.parent = root
+            log.debug("Parent of key {} is {}".format(key, root))
+        balance = root.height_difference()
+        log.debug("Balance for node {} is {}".format(root, balance))
+
+        # Case 1 - Zig-Zig
+        if balance < -1 and key < root.left:
+            log.debug("Zig-Zig at node {}".format(root))
+            return self._rotate_with_left_child(root)
+
+        # Case 2 - Zag-Zag
+        if balance > 1 and key > root.right:
+            log.debug("Zag-Zag at node {}".format(root))
+            return self._rotate_with_right_child(root)
+
+        # Case 3 - Zig-Zag
+        if balance < -1 and key > root.left:
+            log.debug("Zig-Zag at node {}".format(root))
+            return self._double_rotate_left_child(root)
+
+        # Case 4 - Zag-Zig
+        if balance > 1 and key < root.right:
+            log.debug("Zag-Zig at node {}".format(root))
+            return self._double_rotate_right_child(root)
+
+        return root
+
+    def _delete_recursvive(self, root, key):
+        if not root:
+            return root
+
+        if key < root:
+            log.debug("Going left at node {}".format(root))
+            root.left = self._delete_recursvive(root.left, key)
+
+        elif key > root:
+            log.debug("Going right at node {}".format(root))
+            root.right = self._delete_recursvive(root.right, key)
+
+        else:
+            log.debug("Found the node at {}".format(root))
+            if root.left is None:
+                log.debug("Node has no left child")
+                temp = root.right
+                root = None
+                return temp
+
+            elif root.right is None:
+                log.debug("Node has no right child")
+                temp = root.left
+                root = None
+                return temp
+
+            log.debug("Node is an internal node")
+            temp = self._find_min(root.right)
+            root.value = temp.value
+            root.right = self._delete_recursvive(root.right,
+                                                 temp)
+
+        balance = root.height_difference()
+        log.debug("Height difference of node {} is {}".format(root, balance))
+
+        # Case 1 - Zig-Zig
+        if balance < -1 and root.left.height_difference() < 0:
+            log.debug("Zig-Zig rotation at node {}".format(root))
+            return self._rotate_with_left_child(root)
+
+        # Case 2 - Zag-Zag
+        if balance > 1 and root.right.height_difference() >= 0:
+            log.debug("Zag-Zag rotation at node {}".format(root))
+            return self._rotate_with_right_child(root)
+
+        # Case 3 - Zig-Zag
+        if balance < -1 and root.left.height_difference() >= 0:
+            log.debug("Zig-Zag rotation at node {}".format(root))
+            return self._double_rotate_left_child(root)
+
+        # Case 4 - Zag-Zig
+        if balance > 1 and root.right.height_difference() <= 0:
+            log.debug("Zag-Zig rotation at node {}".format(root))
+            return self._double_rotate_right_child(root)
+
+        return root
+
+    def delete(self, node):
+        log.debug('Deleting node {} in Tree {}'.format(node, self.name))
+        self.root = self._delete_recursvive(self.root, node)
 
 
 if __name__ == '__main__':
@@ -171,9 +187,9 @@ if __name__ == '__main__':
     for i in range(10):
         tree.insert(AvlTreeNode(random.randint(-100, 100)))
         # tree.insert(AvlTreeNode(int(input("Value " + str(i)))))
-        print(tree)
+        # print(tree)
 
-    print("Tree: \n", tree)
-    value = int(input("To Delete: "))
-    tree.delete(value)
-    print("Tree:\n", tree)
+    for i in range(4):
+        value = int(input("To Delete: "))
+        tree.delete(AvlTreeNode(value))
+        print("Tree:\n", tree)

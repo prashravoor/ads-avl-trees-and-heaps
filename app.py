@@ -116,7 +116,13 @@ class Application(pygubu.TkApplication):
         raise ValueError
 
     def get_type(self, tree):
-        return type(tree)
+        dummyType = AvlTree("dummy")
+        logger.debug("Type of tree: {}, {}".format(type(tree), type(dummyType)))
+        if type(tree) == type(dummyType):
+            del dummyType
+            return "(AVL Tree)"
+        del dummyType
+        return "(Binary Heap)"
 
     def ListNames(self):
         self.appendMessage(
@@ -138,6 +144,7 @@ class Application(pygubu.TkApplication):
                 "Successfully deleted Tree with name {} of type {}".format(result, self.get_type(tree)))
             if self.selected_tree.name == result:
                 self.clearLabels()
+            del tree
         except KeyError:
             self.appendMessage("Tree {} does not exist".format(result))
 
@@ -180,9 +187,9 @@ class Application(pygubu.TkApplication):
             return
         result = int(result)
 
-        t1 = time.clock()
+        t1 = time.perf_counter()
         inserted = self.selected_tree.insert(result)
-        t2 = time.clock()
+        t2 = time.perf_counter()
         self.setLabels()
         if self.trace_mode:
             if inserted:
@@ -192,47 +199,6 @@ class Application(pygubu.TkApplication):
         self.appendMessage(
             "Item {} inserted in {} seconds".format(result, (t2 - t1)))
 
-    """
-    def ShowListDiag(self):
-        diag = self.builder.get_object('showlist')
-        name = self.builder.get_variable('list_name').get()
-        from_val = self.builder.get_variable('from_node_val').get()
-        show_all_levels = self.builder.get_variable('show_all_levels').get()
-        logger.debug(
-            "Show All Levels has been set to {}".format(show_all_levels))
-
-        if show_all_levels:
-            logger.debug(
-                "Show All Levels has been set, returning the full list")
-            self.appendMessage("{}".format(self.selected_tree))
-            diag.close()
-
-        try:
-            from_val = int(from_val)
-        except:
-            self.appendMessage("Invalid value specified for from index")
-            diag.close()
-            return
-
-        to_val = self.builder.get_variable('to_node_val').get()
-        if "END" == to_val:
-            to_val = 10000000
-        try:
-            to_val = int(to_val)
-        except:
-            self.appendMessage("Invalid value specified for to index")
-            diag.close()
-            return
-
-        logger.debug("Displaying list {} from index {} to index {}".format(
-            name, from_val, to_val))
-        try:
-            list = self.lists[name]
-            self.appendMessage(list.getTraversal(from_val, to_val))
-        except KeyError:
-            self.appendMessage("List {} does not exist".format(name))
-        diag.close()
-        """
     def GetTree(self):
         if not self.selected_tree:
             self.appendMessage("You need to select a tree first")
@@ -277,7 +243,7 @@ class Application(pygubu.TkApplication):
         logger.info("Found {0} keys in file {1}".format(len(keys), filename))
         logger.debug("Keys: {}".format(keys))
 
-        t1 = time.clock()
+        t1 = time.perf_counter()
         for key in keys:
             try:
                 key = int(key)
@@ -293,7 +259,7 @@ class Application(pygubu.TkApplication):
                 logger.error(
                     "Found invalid key {} in file, skipping it".format(key))
         self.setLabels()
-        t2 = time.clock()
+        t2 = time.perf_counter()
         self.appendMessage(
             "Total time to insert {} keys: {} seconds".format(len(keys), (t2 - t1)))
 
@@ -350,9 +316,9 @@ class Application(pygubu.TkApplication):
             return
         result = int(result)
 
-        t1 = time.clock()
+        t1 = time.perf_counter()
         deleted = self.selected_tree.delete(result)
-        t2 = time.clock()
+        t2 = time.perf_counter()
         if deleted:
             self.appendMessage("Deleted item {} from Tree {} in {} seconds".format(
                 result, self.selected_tree.name, (t2 - t1)))
@@ -376,15 +342,15 @@ class Application(pygubu.TkApplication):
             return
         result = int(result)
 
-        t1 = time.clock()
+        t1 = time.perf_counter()
         node = self.selected_tree.find(result)
-        t2 = time.clock()
+        t2 = time.perf_counter()
         if not node:
             self.appendMessage("Item {} was not found Tree {}".format(
                 result, self.selected_tree.name))
         else:
             self.appendMessage("Item {} was found in the tree {}, Left Node: {}, Right Node: {}, Parent: {}".format(
-                result, self.selected_tree.name, node.prev, node.next))
+                result, self.selected_tree.name, node.left, node.right, node.parent))
         self.appendMessage(
             "Find Node Completed in {} seconds".format((t2 - t1)))
 
@@ -418,7 +384,7 @@ class Application(pygubu.TkApplication):
         logger.info("Found {0} keys in file {1}".format(len(keys), filename))
         logger.debug("Keys: {}".format(keys))
 
-        t1 = time.clock()
+        t1 = time.perf_counter()
         for key in keys:
             try:
                 key = int(key)
@@ -434,7 +400,7 @@ class Application(pygubu.TkApplication):
                 logger.error(
                     "Found invalid key {} in file, skipping it".format(key))
         self.setLabels()
-        t2 = time.clock()
+        t2 = time.perf_counter()
         self.appendMessage(
             "Total time to delete {} keys: {} seconds".format(len(keys), (t2 - t1)))
 

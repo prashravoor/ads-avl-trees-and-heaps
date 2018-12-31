@@ -45,13 +45,17 @@ class TreeNode(object):
 class BinaryTree(object):
     def __init__(self, name):
         self.root = None
-        self.height = -1
         self.num_nodes = 0
         self.name = name
         self.size = 0
 
     def length(self):
         return self.size
+    
+    def height(self):
+        if self.root:
+            return self.root.height()
+        return 0
 
     # Prints the tree on it's side, with the indent set to the level of the node
     # Siblings are on the same level
@@ -78,7 +82,6 @@ class BinaryTree(object):
     - - - - - - None
     - - - None
     """
-
     def _pretty_print(self, node, level=0):
         # log.debug("Entered print at node {} at level {}".format(node, level))
         result = ''
@@ -100,6 +103,17 @@ class BinaryTree(object):
     def __str__(self):
         # Display the tree as a string
         return self._pretty_print(self.root)
+    
+    def _delete_nodes(self, node):
+        if not node:
+            return
+        self._delete_nodes(node.left)
+        self._delete_nodes(node.right)
+        del node
+    
+    def __del__(self):
+        # Delete each node recursively
+        self._delete_nodes(self.root)
 
     def get_height(self):
         return self.height

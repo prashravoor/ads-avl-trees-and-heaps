@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from avl_tree import AvlTree
 from bin_heap import BinaryMinHeap
 
+
 def get_x_y(measure):
     x = []
     y = []
@@ -14,7 +15,8 @@ def get_x_y(measure):
         if len(elem) > 0:
             x.append(elem[0])
             y.append(elem[1])
-    return (x,y)
+    return (x, y)
+
 
 def plot(measure_tree, measure_heap, title, xlabel, ylabel):
     (x, y) = get_x_y(measure_tree)
@@ -28,6 +30,7 @@ def plot(measure_tree, measure_heap, title, xlabel, ylabel):
     plt.ylabel(ylabel)
     plt.legend(loc='best')
     plt.show()
+
 
 avl = AvlTree("Tree")
 heap = BinaryMinHeap("Heap")
@@ -54,10 +57,13 @@ for i in range(1, num_trials):
     t2 = time.perf_counter()
     measure_insert_heap.append([i, t2-t1])
 
+plot(measure_insert_tree, measure_insert_heap, 'Insert Time Comparision',
+     'Number of Elements in Tree', 'Time (seconds)')
+
 # Find Tree
+avl2 = AvlTree("FindTree")
 for i in range(1, int(num_trials/100)):
-    avl2 = AvlTree("FindTree")
-    for _ in range(1, i*100):
+    for _ in range(1, 100):
         avl2.insert(randint(1000000000, 9999999999))
     t1 = time.perf_counter()
     try:
@@ -65,22 +71,25 @@ for i in range(1, int(num_trials/100)):
     except ValueError:
         pass
     t2 = time.perf_counter()
-    del avl2
     measure_find_tree.append([i*100, t2-t1])
+del avl2
 
 # Find Heap
+heap2 = BinaryMinHeap("FindHeap")
 for i in range(1, int(num_trials/100)):
-    heap2 = BinaryMinHeap("FindHeap")
-    for _ in range(1, i * 100):
+    for _ in range(1, 100):
         heap2.insert(randint(1000000000, 9999999999))
     t1 = time.perf_counter()
     try:
         heap2.find(randint(1000000000, 9999999999))
     except ValueError:
         pass
-    del heap2
     t2 = time.perf_counter()
     measure_find_heap.append([i*100, t2-t1])
+del heap2
+
+plot(measure_find_tree, measure_find_heap, 'Find Time Comparision',
+     'Number of Elements in Tree', 'Time (seconds)')
 
 # Delete Min Tree
 for i in range(1, num_trials):
@@ -97,6 +106,7 @@ for i in range(1, num_trials):
     t2 = time.perf_counter()
     measure_deletemin_heap.append([heap.length(), t2-t1])
 
-plot(measure_insert_tree, measure_insert_heap, 'Insert Time Comparision', 'Inserted Element number', 'Time (seconds)')
-plot(measure_find_tree, measure_find_heap, 'Find Time Comparision', 'Number of Elements in Tree', 'Time (seconds)')
-plot(measure_deletemin_tree, measure_deletemin_heap, 'DeleteMin Time Comparision', 'Inserted Element number', 'Time (seconds)')
+plot(measure_deletemin_tree, measure_deletemin_heap,
+     'DeleteMin Time Comparision', 'Number of Elements in Tree', 'Time (seconds)')
+del heap
+del avl

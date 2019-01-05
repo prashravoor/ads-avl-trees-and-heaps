@@ -59,7 +59,7 @@ for i in range(1, num_trials):
 
 plot(measure_insert_tree, measure_insert_heap, 'Insert Time Comparision',
      'Number of Elements in Tree', 'Time (seconds)')
-
+"""
 # Find Tree
 avl2 = AvlTree("FindTree")
 for i in range(1, int(num_trials/100)):
@@ -90,7 +90,7 @@ del heap2
 
 plot(measure_find_tree, measure_find_heap, 'Find Time Comparision',
      'Number of Elements in Tree', 'Time (seconds)')
-
+"""
 # Delete Min Tree
 for i in range(1, num_trials):
     t1 = time.perf_counter()
